@@ -13,7 +13,7 @@ This guide provides a step-by-step tutorial on implementing authentication in Dj
 ### 1.1 Create a new Django project
 
 ```bash
-django-admin startproject config ProjectJWT
+django-admin startproject config ExampleProject
 cd ProjectJWT
 ```
 
@@ -58,7 +58,7 @@ from datetime import timedelta
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': False,
+    'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
 }
 ```
@@ -79,7 +79,7 @@ class CustomUser(AbstractUser):
         ('Employee', 'Employee'),
     ]
 
-    User_Type = models.CharField(choices=USER_TYPES, max_length=100, null=True)
+    user_type = models.CharField(choices=USER_TYPES, max_length=100, null=True)
 ```
 
 ### 2.2 Create and run migrations
