@@ -13,20 +13,20 @@ This guide provides a step-by-step tutorial on implementing authentication in Dj
 ### 1.1 Create a new Django project
 
 ```bash
-django-admin startproject myProject
-cd myProject
+django-admin startproject config ProjectJWT
+cd ProjectJWT
 ```
 
 ### 1.2 Create a Django app
 
 ```bash
-python manage.py startapp myApp
+python manage.py startapp app_main
 ```
 
 ### 1.3 Install required packages
 
 ```bash
-pip install djangorestframework djangorestframework-simplejwt
+pip install django djangorestframework djangorestframework-simplejwt
 ```
 
 ### 1.4 Update settings.py
@@ -36,14 +36,14 @@ Add the following to your `settings.py`:
 ```python
 INSTALLED_APPS = [
     # ... existing apps
-    'myApp',
+    'app_main',
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
 ]
 
 # Custom user model
-AUTH_USER_MODEL = 'myApp.CustomUser'
+AUTH_USER_MODEL = 'app_main.CustomUser'
 
 # REST Framework configuration
 REST_FRAMEWORK = {
@@ -51,13 +51,23 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
+
+# Additional customizations of JWT settings in `settings.py`
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+}
 ```
 
 ## Step 2: Create Custom User Model
 
 ### 2.1 Define the model
 
-In `myApp/models.py`:
+In `app_main/models.py`:
 
 ```python
 from django.db import models
@@ -83,7 +93,7 @@ python manage.py migrate
 
 ### 3.1 User Serializer
 
-In `myApp/serializers.py`:
+In `app_main/serializers.py`:
 
 ```python
 from rest_framework import serializers
@@ -101,37 +111,30 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'User_Type']
+        fields = ['username', 'email', 'password', 'user_type']
 
     def create(self, validated_data):
         user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
             password=validated_data['password'],
-            User_Type=validated_data['User_Type'],
+            user_type=validated_data['user_type'],
         )
         return user
-
-class LoginResponseSerializer(serializers.Serializer):
-    refresh = serializers.CharField()
-    access = serializers.CharField()
-    user = UserSerializer()
 ```
 
 ## Step 4: Create Views
 
 ### 4.1 Authentication Views
 
-In `myApp/views.py`:
+In `app_main/views.py`:
 
 ```python
-from django.shortcuts import render
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import *
-from django.contrib.auth import get_user_model, authenticate
+from django.contrib.auth import authenticate
 from rest_framework.views import APIView
 
 class RegisterView(generics.CreateAPIView):
@@ -175,7 +178,7 @@ class LogoutView(APIView):
             )
         except Exception as e:
             return Response(
-                {"error": "Invalid and Expire Token"},
+                {"error": f"{e}"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 ```
@@ -184,7 +187,7 @@ class LogoutView(APIView):
 
 ### 5.1 App URLs
 
-In `myApp/urls.py`:
+In `app_main/urls.py`:
 
 ```python
 from django.contrib import admin
@@ -210,7 +213,7 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('myApp.urls')),
+    path('api/', include('app_main.urls')),
 ]
 ```
 
@@ -235,7 +238,7 @@ Use Thunder Client or curl:
   "username": "testuser",
   "email": "test@example.com",
   "password": "password123",
-  "User_Type": "Employee"
+  "user_type": "Employee"
 }
 ```
 
@@ -306,22 +309,6 @@ class ProtectedView(APIView):
 
     def get(self, request):
         return Response({"message": "This is a protected view"})
-```
-## Additional Configuration
-
-### JWT Settings
-
-You can customize JWT settings in `settings.py`:
-
-```python
-from datetime import timedelta
-
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': False,
-    'BLACKLIST_AFTER_ROTATION': True,
-}
 ```
 
 ## Conclusion
