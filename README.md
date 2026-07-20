@@ -1,4 +1,4 @@
-# API-Automation-with-JWT-Authentication
+# Full JWT Authentication Guide
 
 This guide provides a step-by-step tutorial on implementing authentication in Django REST Framework using JWT (JSON Web Tokens) with a custom user model.
 
